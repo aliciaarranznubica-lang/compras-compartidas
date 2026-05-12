@@ -45,6 +45,8 @@ export default function ComprasCompartidas() {
     productosIniciales
   );
 
+  // CARGAR DATOS
+
   useEffect(() => {
     const guardado = localStorage.getItem(
       'compras-compartidas'
@@ -55,12 +57,16 @@ export default function ComprasCompartidas() {
     }
   }, []);
 
+  // GUARDAR DATOS
+
   useEffect(() => {
     localStorage.setItem(
       'compras-compartidas',
       JSON.stringify(productos)
     );
   }, [productos]);
+
+  // MARCAR / DESMARCAR COMPRA
 
   const toggleCompra = (
     productoIndex,
@@ -85,6 +91,8 @@ export default function ComprasCompartidas() {
     );
   };
 
+  // NUEVA RONDA
+
   const nuevaRonda = (productoIndex) => {
     setProductos((prev) =>
       prev.map((producto, i) =>
@@ -95,12 +103,39 @@ export default function ComprasCompartidas() {
     );
   };
 
+  // REINICIAR TODO
+
   const reiniciarTodo = () => {
     localStorage.removeItem(
       'compras-compartidas'
     );
 
     setProductos(productosIniciales);
+  };
+
+  // ENVIAR WHATSAPP
+
+  const enviarAviso = (producto) => {
+    const faltan = personas
+      .filter(
+        (persona) =>
+          !producto.registros.includes(persona.id)
+      )
+      .map((p) => `${p.emoji} ${p.nombre}`)
+      .join('\n');
+
+    const mensaje = `🛒 FALTA COMPRAR
+
+${producto.nombre}
+
+Pendientes:
+${faltan}`;
+
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(
+        mensaje
+      )}`
+    );
   };
 
   return (
@@ -139,6 +174,7 @@ export default function ComprasCompartidas() {
                 'space-between',
               alignItems: 'center',
               gap: '12px',
+              flexWrap: 'wrap',
             }}
           >
             <div>
@@ -202,6 +238,8 @@ export default function ComprasCompartidas() {
                     '0 8px 24px rgba(0,0,0,0.05)',
                 }}
               >
+                {/* CABECERA PRODUCTO */}
+
                 <div
                   style={{
                     display: 'flex',
@@ -210,6 +248,7 @@ export default function ComprasCompartidas() {
                     alignItems: 'center',
                     marginBottom: '18px',
                     gap: '10px',
+                    flexWrap: 'wrap',
                   }}
                 >
                   <h2
@@ -221,23 +260,50 @@ export default function ComprasCompartidas() {
                     {producto.nombre}
                   </h2>
 
-                  <button
-                    onClick={() =>
-                      nuevaRonda(productoIndex)
-                    }
+                  <div
                     style={{
-                      border: 'none',
-                      background: '#f1f5f9',
-                      padding: '10px 14px',
-                      borderRadius: '14px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      color: '#334155',
+                      display: 'flex',
+                      gap: '10px',
+                      flexWrap: 'wrap',
                     }}
                   >
-                    Nueva ronda
-                  </button>
+                    <button
+                      onClick={() =>
+                        enviarAviso(producto)
+                      }
+                      style={{
+                        border: 'none',
+                        background: '#dcfce7',
+                        padding: '10px 14px',
+                        borderRadius: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        color: '#166534',
+                      }}
+                    >
+                      📲 Avisar
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        nuevaRonda(productoIndex)
+                      }
+                      style={{
+                        border: 'none',
+                        background: '#f1f5f9',
+                        padding: '10px 14px',
+                        borderRadius: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        color: '#334155',
+                      }}
+                    >
+                      Nueva ronda
+                    </button>
+                  </div>
                 </div>
+
+                {/* PERSONAS */}
 
                 <div
                   style={{
@@ -303,6 +369,20 @@ export default function ComprasCompartidas() {
                     );
                   })}
                 </div>
+
+                {/* RESUMEN */}
+
+                <div
+                  style={{
+                    marginTop: '16px',
+                    fontSize: '14px',
+                    color: '#64748b',
+                  }}
+                >
+                  Han comprado:{' '}
+                  {producto.registros.length}/
+                  {personas.length}
+                </div>
               </div>
             )
           )}
@@ -336,8 +416,11 @@ export default function ComprasCompartidas() {
           • Pulsa un emoji cuando alguien
           compre ese producto.
           <br />
-          • Cuando el producto vuelva a
-          acabarse, pulsa “Nueva ronda”.
+          • Cuando se vuelva a acabar,
+          pulsa “Nueva ronda”.
+          <br />
+          • “📲 Avisar” abre WhatsApp con
+          el mensaje preparado.
           <br />
           • Todo se guarda automáticamente.
         </div>
