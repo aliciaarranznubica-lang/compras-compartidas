@@ -1,38 +1,18 @@
 import React, { useEffect, useState } from 'react';
 
-export default function ComprasCompartidas() {
+export default function App() {
   const personas = [
-    {
-      id: 1,
-      nombre: 'Luna',
-      emoji: '🌙',
-      color: '#fde68a',
-    },
-    {
-      id: 2,
-      nombre: 'Nube',
-      emoji: '☁️',
-      color: '#bfdbfe',
-    },
-    {
-      id: 3,
-      nombre: 'Corazón',
-      emoji: '❤️',
-      color: '#fecaca',
-    },
-    {
-      id: 4,
-      nombre: 'Estrella',
-      emoji: '⭐',
-      color: '#fde68a',
-    },
+    { id: 1, nombre: 'Luna', emoji: '🌙' },
+    { id: 2, nombre: 'Nube', emoji: '☁️' },
+    { id: 3, nombre: 'Corazón', emoji: '❤️' },
+    { id: 4, nombre: 'Estrella', emoji: '⭐' },
   ];
 
   const productosIniciales = [
     'Papel cocina',
     'Lavavajillas',
     'Fairy',
-    'Bolsas de basura',
+    'Bolsas basura',
     'Sanitol',
     'Sal lavavajillas',
     'Abrillantador',
@@ -41,37 +21,28 @@ export default function ComprasCompartidas() {
     registros: [],
   }));
 
-  const [productos, setProductos] = useState(
-    productosIniciales
-  );
-
-  // CARGAR DATOS
+  const [productos, setProductos] = useState(productosIniciales);
 
   useEffect(() => {
-    const guardado = localStorage.getItem(
-      'compras-compartidas'
-    );
+    const guardado = localStorage.getItem('compras');
 
     if (guardado) {
       setProductos(JSON.parse(guardado));
     }
   }, []);
 
-  // GUARDAR DATOS
-
   useEffect(() => {
     localStorage.setItem(
-      'compras-compartidas',
+      'compras',
       JSON.stringify(productos)
     );
   }, [productos]);
 
-  // MARCAR / DESMARCAR COMPRA
+  const toggleCompra = (productoIndex, personaId) => {
+    if (navigator.vibrate) {
+      navigator.vibrate(30);
+    }
 
-  const toggleCompra = (
-    productoIndex,
-    personaId
-  ) => {
     setProductos((prev) =>
       prev.map((producto, i) => {
         if (i !== productoIndex) return producto;
@@ -91,8 +62,6 @@ export default function ComprasCompartidas() {
     );
   };
 
-  // NUEVA RONDA
-
   const nuevaRonda = (productoIndex) => {
     setProductos((prev) =>
       prev.map((producto, i) =>
@@ -103,17 +72,10 @@ export default function ComprasCompartidas() {
     );
   };
 
-  // REINICIAR TODO
-
-  const reiniciarTodo = () => {
-    localStorage.removeItem(
-      'compras-compartidas'
-    );
-
+  const reiniciar = () => {
+    localStorage.removeItem('compras');
     setProductos(productosIniciales);
   };
-
-  // ENVIAR WHATSAPP
 
   const enviarAviso = (producto) => {
     const faltan = personas
@@ -134,297 +96,234 @@ ${faltan}`;
     window.open(
       `https://wa.me/?text=${encodeURIComponent(
         mensaje
-      )}`
+      )}`,
+      '_blank'
     );
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background:
-          'linear-gradient(to bottom, #f8fafc, #eef2ff)',
-        padding: '20px',
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, sans-serif',
-      }}
-    >
-      <div
-        style={{
-          maxWidth: '700px',
-          margin: '0 auto',
-        }}
-      >
-        {/* HEADER */}
+    <div style={styles.app}>
+      <div style={styles.header}>
+        <div>
+          <h1 style={styles.title}>
+            Compras 🛒
+          </h1>
 
-        <div
-          style={{
-            background: 'white',
-            borderRadius: '28px',
-            padding: '24px',
-            marginBottom: '24px',
-            boxShadow:
-              '0 10px 30px rgba(0,0,0,0.05)',
-          }}
+          <p style={styles.subtitle}>
+            Control de productos del piso
+          </p>
+        </div>
+
+        <button
+          onClick={reiniciar}
+          style={styles.resetButton}
         >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent:
-                'space-between',
-              alignItems: 'center',
-              gap: '12px',
-              flexWrap: 'wrap',
-            }}
-          >
-            <div>
-              <h1
-                style={{
-                  margin: 0,
-                  fontSize: '38px',
-                  lineHeight: '1',
-                }}
-              >
-                Compras 🛒
-              </h1>
+          Reiniciar
+        </button>
+      </div>
 
-              <p
-                style={{
-                  marginTop: '10px',
-                  color: '#64748b',
-                  lineHeight: '1.5',
-                }}
+      {productos.map((producto, productoIndex) => {
+        const faltan = personas.filter(
+          (persona) =>
+            !producto.registros.includes(persona.id)
+        );
+
+        return (
+          <div
+            key={producto.nombre}
+            style={styles.card}
+          >
+            <div style={styles.cardTop}>
+              <div>
+                <h2 style={styles.producto}>
+                  {producto.nombre}
+                </h2>
+
+                <p style={styles.faltan}>
+                  Faltan:{' '}
+                  {faltan.length === 0
+                    ? 'nadie 🎉'
+                    : faltan
+                        .map((p) => p.nombre)
+                        .join(', ')}
+                </p>
+              </div>
+
+              <button
+                onClick={() =>
+                  enviarAviso(producto)
+                }
+                style={styles.alertButton}
               >
-                Marca quién ha comprado cada
-                producto.
-              </p>
+                📲
+              </button>
+            </div>
+
+            <div style={styles.personas}>
+              {personas.map((persona) => {
+                const activo =
+                  producto.registros.includes(
+                    persona.id
+                  );
+
+                return (
+                  <button
+                    key={persona.id}
+                    onClick={() =>
+                      toggleCompra(
+                        productoIndex,
+                        persona.id
+                      )
+                    }
+                    style={{
+                      ...styles.personaButton,
+                      ...(activo
+                        ? styles.personaActiva
+                        : {}),
+                    }}
+                  >
+                    <div style={styles.emoji}>
+                      {persona.emoji}
+                    </div>
+
+                    <div style={styles.nombre}>
+                      {persona.nombre}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
             <button
-              onClick={reiniciarTodo}
-              style={{
-                border: 'none',
-                background: '#111827',
-                color: 'white',
-                padding: '12px 16px',
-                borderRadius: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-              }}
+              onClick={() =>
+                nuevaRonda(productoIndex)
+              }
+              style={styles.roundButton}
             >
-              Reiniciar
+              Nueva ronda
             </button>
           </div>
-        </div>
-
-        {/* PRODUCTOS */}
-
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '18px',
-          }}
-        >
-          {productos.map(
-            (producto, productoIndex) => (
-              <div
-                key={producto.nombre}
-                style={{
-                  background: 'white',
-                  borderRadius: '24px',
-                  padding: '20px',
-                  boxShadow:
-                    '0 8px 24px rgba(0,0,0,0.05)',
-                }}
-              >
-                {/* CABECERA PRODUCTO */}
-
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent:
-                      'space-between',
-                    alignItems: 'center',
-                    marginBottom: '18px',
-                    gap: '10px',
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <h2
-                    style={{
-                      margin: 0,
-                      fontSize: '22px',
-                    }}
-                  >
-                    {producto.nombre}
-                  </h2>
-
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: '10px',
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <button
-                      onClick={() =>
-                        enviarAviso(producto)
-                      }
-                      style={{
-                        border: 'none',
-                        background: '#dcfce7',
-                        padding: '10px 14px',
-                        borderRadius: '14px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        color: '#166534',
-                      }}
-                    >
-                      📲 Avisar
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        nuevaRonda(productoIndex)
-                      }
-                      style={{
-                        border: 'none',
-                        background: '#f1f5f9',
-                        padding: '10px 14px',
-                        borderRadius: '14px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        color: '#334155',
-                      }}
-                    >
-                      Nueva ronda
-                    </button>
-                  </div>
-                </div>
-
-                {/* PERSONAS */}
-
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns:
-                      'repeat(4, 1fr)',
-                    gap: '12px',
-                  }}
-                >
-                  {personas.map((persona) => {
-                    const activo =
-                      producto.registros.includes(
-                        persona.id
-                      );
-
-                    return (
-                      <button
-                        key={persona.id}
-                        onClick={() =>
-                          toggleCompra(
-                            productoIndex,
-                            persona.id
-                          )
-                        }
-                        style={{
-                          border: activo
-                            ? `3px solid ${persona.color}`
-                            : '2px solid #e5e7eb',
-                          background: activo
-                            ? persona.color
-                            : 'white',
-                          borderRadius: '22px',
-                          padding: '14px 8px',
-                          cursor: 'pointer',
-                          transition: '0.2s',
-                          transform: activo
-                            ? 'scale(1.05)'
-                            : 'scale(1)',
-                          boxShadow: activo
-                            ? '0 6px 18px rgba(0,0,0,0.08)'
-                            : 'none',
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontSize: '34px',
-                            marginBottom: '6px',
-                          }}
-                        >
-                          {persona.emoji}
-                        </div>
-
-                        <div
-                          style={{
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            color: '#475569',
-                          }}
-                        >
-                          {persona.nombre}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* RESUMEN */}
-
-                <div
-                  style={{
-                    marginTop: '16px',
-                    fontSize: '14px',
-                    color: '#64748b',
-                  }}
-                >
-                  Han comprado:{' '}
-                  {producto.registros.length}/
-                  {personas.length}
-                </div>
-              </div>
-            )
-          )}
-        </div>
-
-        {/* INFO */}
-
-        <div
-          style={{
-            marginTop: '24px',
-            background: 'white',
-            borderRadius: '24px',
-            padding: '20px',
-            color: '#64748b',
-            lineHeight: '1.7',
-            boxShadow:
-              '0 8px 24px rgba(0,0,0,0.05)',
-          }}
-        >
-          <strong
-            style={{
-              color: '#111827',
-            }}
-          >
-            Cómo funciona
-          </strong>
-
-          <br />
-          <br />
-
-          • Pulsa un emoji cuando alguien
-          compre ese producto.
-          <br />
-          • Cuando se vuelva a acabar,
-          pulsa “Nueva ronda”.
-          <br />
-          • “📲 Avisar” abre WhatsApp con
-          el mensaje preparado.
-          <br />
-          • Todo se guarda automáticamente.
-        </div>
-      </div>
+        );
+      })}
     </div>
   );
 }
+
+const styles = {
+  app: {
+    background:
+      'linear-gradient(to bottom, #f8fafc, #e2e8f0)',
+    minHeight: '100vh',
+    padding: '18px',
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, sans-serif',
+  },
+
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '20px',
+    gap: '10px',
+  },
+
+  title: {
+    margin: 0,
+    fontSize: '42px',
+    fontWeight: '800',
+  },
+
+  subtitle: {
+    marginTop: '6px',
+    color: '#64748b',
+    fontSize: '16px',
+  },
+
+  resetButton: {
+    border: 'none',
+    background: '#111827',
+    color: 'white',
+    padding: '12px 16px',
+    borderRadius: '16px',
+    fontSize: '15px',
+    fontWeight: '600',
+  },
+
+  card: {
+    background: 'white',
+    borderRadius: '28px',
+    padding: '18px',
+    marginBottom: '18px',
+    boxShadow:
+      '0 10px 25px rgba(0,0,0,0.06)',
+  },
+
+  cardTop: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '18px',
+  },
+
+  producto: {
+    margin: 0,
+    fontSize: '24px',
+  },
+
+  faltan: {
+    marginTop: '6px',
+    color: '#64748b',
+    fontSize: '14px',
+  },
+
+  alertButton: {
+    border: 'none',
+    background: '#dcfce7',
+    width: '54px',
+    height: '54px',
+    borderRadius: '18px',
+    fontSize: '24px',
+  },
+
+  personas: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '10px',
+  },
+
+  personaButton: {
+    border: '2px solid #e5e7eb',
+    background: 'white',
+    borderRadius: '22px',
+    padding: '12px 8px',
+    minHeight: '92px',
+    transition: '0.2s',
+  },
+
+  personaActiva: {
+    background: '#d1fae5',
+    border: '2px solid #10b981',
+    transform: 'scale(1.03)',
+  },
+
+  emoji: {
+    fontSize: '34px',
+    marginBottom: '6px',
+  },
+
+  nombre: {
+    fontSize: '13px',
+    fontWeight: '600',
+  },
+
+  roundButton: {
+    marginTop: '14px',
+    width: '100%',
+    border: 'none',
+    background: '#f1f5f9',
+    padding: '14px',
+    borderRadius: '18px',
+    fontSize: '15px',
+    fontWeight: '600',
+  },
+};
